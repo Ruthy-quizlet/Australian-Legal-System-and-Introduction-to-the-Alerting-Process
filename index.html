@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Australian Legal System Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .quiz-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .welcome-screen, .name-screen, .completion-screen {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .question {
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .options {
+            margin-bottom: 15px;
+        }
+        .option {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .option:hover {
+            background-color: #f0f0f0;
+        }
+        .selected {
+            background-color: #e0e0ff;
+            border-color: #b0b0ff;
+        }
+        .btn {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .btn.skip {
+            background-color: #ff9800;
+        }
+        .btn.skip:hover {
+            background-color: #e68a00;
+        }
+        .btn.restart {
+            background-color: #f44336;
+        }
+        .btn.restart:hover {
+            background-color: #d32f2f;
+        }
+        .progress {
+            margin-bottom: 20px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            height: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 0.3s ease;
+        }
+        .feedback {
+            margin: 15px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .quiz-title {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 5px;
+            margin-bottom: 20px;
+        }
+        .score-display {
+            font-weight: bold;
+            margin: 10px 0;
+            font-size: 18px;
+        }
+        .question-counter {
+            font-weight: bold;
+            margin: 10px 0;
+            font-size: 16px;
+            color: #666;
+        }
+        .button-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .name-input {
+            width: 100%;
+            padding: 10px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .results-container {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .certificate {
+            border: 5px solid #4CAF50;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+            background-color: #f9f9f9;
+        }
+        .certificate h2 {
+            color: #4CAF50;
+        }
+        .hidden {
+            display: none;
+        }
+        .final-score {
+            font-size: 36px;
+            color: #155724;
+            margin: 20px 0;
+        }
+        .performance-message {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        .excellent { color: #155724; }
+        .good { color: #0c5460; }
+        .needs-improvement { color: #856404; }
+        .poor { color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="welcome-screen">
+            <h1>Australian Legal System Quiz</h1>
+            <p>Welcome to the Australian Legal System and Introduction to the Alerting Process Quiz.</p>
+            <p>This quiz contains 20 questions covering the Australian legal system, how laws are made, and the alerting process.</p>
+            <p>You must answer all 20 questions to complete the quiz. You can skip questions and return to them later.</p>
+            <button id="start-btn" class="btn">I'm Ready to Start</button>
+        </div>
+
+        <!-- Name Input Screen -->
+        <div id="name-screen" class="name-screen hidden">
+            <h1>Enter Your Name</h1>
+            <p>Please enter your full name to begin the quiz:</p>
+            <input type="text" id="user-name" class="name-input" placeholder="Your Full Name">
+            <button id="submit-name-btn" class="btn">Start Quiz</button>
+        </div>
+
+        <!-- Quiz Container -->
+        <div id="quiz-section" class="hidden">
+            <div class="progress">
+                <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
+            </div>
+            <h2 class="quiz-title">Australian Legal System and Alerting Process</h2>
+            <div class="question-counter">Question <span id="current-question-number">1</span> of 20</div>
+            <div class="score-display">Answered: <span id="answered-count">0</span>/20</div>
+            <div id="feedback" class="feedback"></div>
+            <div class="quiz-container" id="quiz-container">
+                <div class="question" id="question"></div>
+                <div class="options" id="options"></div>
+                <div class="button-container">
+                    <button class="btn" id="submit-btn">Submit Answer</button>
+                    <button class="btn skip" id="skip-btn">Skip Question</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Screen -->
+        <div id="completion-screen" class="completion-screen hidden">
+            <h1>Quiz Completed!</h1>
+            <p class="performance-message" id="performance-message">Congratulations <span id="completion-name"></span>!</p>
+            <div class="final-score">Score: <span id="final-score">0/20</span></div>
+            <div class="certificate">
+                <h2>Certificate of Completion</h2>
+                <p>This certifies that</p>
+                <h3 id="certificate-name"></h3>
+                <p>has successfully completed the Australian Legal System Quiz</p>
+                <p>Date: <span id="completion-date"></span></p>
+                <p>Score: <span id="certificate-score"></span></p>
+            </div>
+            <div class="results-container">
+                <h3>Your Results:</h3>
+                <div id="results-list"></div>
+            </div>
+            <button class="btn" id="download-results-btn">Download Results</button>
+            <button class="btn restart" id="restart-quiz-btn">Take Quiz Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Quiz questions
+        const quizQuestions = [
+            {
+                question: "What type of government system does Australia have?",
+                options: [
+                    "Presidential republic",
+                    "Constitutional monarchy with a parliamentary system",
+                    "Federal republic",
+                    "Direct democracy"
+                ],
+                correctAnswer: 1
+            },
+            {
+                question: "Who is the Head of State of Australia?",
+                options: [
+                    "The Prime Minister",
+                    "The Governor-General",
+                    "Queen Elizabeth II",
+                    "His Majesty King Charles III"
+                ],
+                correctAnswer: 3
+            },
+            {
+                question: "How many jurisdictions make up Australia's multi-jurisdictional legal system?",
+                options: [
+                    "6",
+                    "7",
+                    "8",
+                    "9"
+                ],
+                correctAnswer: 3
+            },
+            {
+                question: "Which of the following is NOT one of the main ways laws are made in Australia?",
+                options: [
+                    "Statute law",
+                    "Delegated legislation",
+                    "Common law",
+                    "Royal decrees"
+                ],
+                correctAnswer: 3
+            },
+            {
+                question: "What is the first formal step in the process of a statutory law being created?",
+                options: [
+                    "Committee review",
+                    "First reading",
+                    "Debate",
+                    "Assent by Governor-General"
+                ],
+                correctAnswer: 1
+            },
+            {
+                question: "What happens during the \"second reading\" of a Bill?",
+                options: [
+                    "The Bill is presented to either house",
+                    "A detailed speech setting out the purpose and importance of the Bill",
+                    "Members vote on amendments",
+                    "The Bill is sent to the Governor-General"
+                ],
+                correctAnswer: 1
+            },
+            {
+                question: "What happens after a Bill is passed by both Parliaments?",
+                options: [
+                    "It becomes a regulation",
+                    "It becomes an Act and is sent for assent",
+                    "It is reviewed by the Supreme Court",
+                    "It is published in the Government Gazette"
+                ],
+                correctAnswer: 1
+            },
+            {
+                question: "Who gives assent to Bills passed by the Federal Parliament?",
+                options: [
+                    "The Prime Minister",
+                    "The High Court",
+                    "The Governor-General",
+                    "The Queen"
+                ],
+                correctAnswer: 2
+            },
+            {
+                question: "What is the primary purpose of alerts in the context described?",
+                options: [
+                    "To inform customers about new products",
+                    "To notify customers about their obligations under specific legislation",
+                    "To warn customers about security breaches",
+                    "To update customers on company policies"
+                ],
+                correctAnswer: 1
+            },
+            {
+                question: "Which of the following is NOT a key step in the alerting process?",
+                options: [
+                    "Drafting the content of the alert",
+                    "Uploading the alert onto the Edit+ platform",
+                    "Linking alerts to corresponding obligations",
+                    "Obtaining customer feedback on alerts"
+                ],
+                correctAnswer: 3
+            },
+            {
+                question: "What AI tool is mentioned as assisting editors in drafting alerts?",
+                options: [
+                    "ChatGPT",
+                    "Anthropic (Claude)",
+                    "Google Bard",
+                    "Microsoft Copilot"
+                ],
+                correctAnswer: 1
+            },
+            {
+                question: "What does the \"Alerts-Prompt Template\" contain?",
+                options: [
+                    "A list of all alerts ever created",
+                    "Prompts tailored to specific legislation or instruments",
+                    "Customer feedback on previous alerts",
+                    "Legal definitions of regulatory terms"
+                ],
+                correctAnswer: 1
+            },
+            {
+                question: "What type of prompt sets the AI's role, tone, and writing style?",
+                options: [
+                    "User prompts",
+                    "Follow-up prompts",
+                    "Prompt templates or system prompts",
+                    "Refinement prompts"
+                ],
+                correctAnswer: 2
+            },
+            {
+                question: "What is the purpose of follow-up prompts in the Anthropic system?",
+                options: [
+                    "To initiate a new task",
+                    "To refine draft output by asking for clarifications or revisions",
+                    "To terminate the AI session",
+                    "To change the system settings"
+                ],
+                correctAnswer: 1
+            },
+            {
+                question: "Which of the following is NOT mentioned as a key benefit of using Anthropic?",
+                options: [
+                    "Summarization efficiency",
+                    "Contextual understanding",
+                    "Ability to draft legal documents",
+                    "Consistency across drafts"
+                ],
+                correctAnswer: 2
+            },
+            {
+                question: "What is one of the challenges of using Anthropic?",
+                options: [
+                    "High cost",
+                    "Slow processing time",
+                    "Potential for hallucinations",
+                    "Limited availability"
+                ],
+                correctAnswer: 2
+            },
+            {
+                question: "Which of the following is recommended as a tip for success when using AI?",
+                options: [
+                    "Use vague prompts to allow AI creativity",
+                    "Avoid providing context to save time",
+                    "Be specific in outlining what AI should do",
+                    "Always accept the first AI response"
+                ],
+                correctAnswer: 2
+            },
+            {
+                question: "What should users always do with AI-generated content according to the cautions?",
+                options: [
+                    "Share it immediately",
+                    "Review it for accuracy",
+                    "Simplify it",
+                    "Expand it with more details"
+                ],
+                correctAnswer: 1
+            },
+            {
+                question: "What is the final step in the refinement process shown in the example scenario?",
+                options: [
+                    "Adding citations",
+                    "Rewriting in simpler language for a general audience",
+                    "Expanding to include more technical details",
+                    "Converting to bullet points"
+                ],
+                correctAnswer: 1
+            },
+            {
+                question: "What type of prompts should be avoided when working with AI?",
+                options: [
+                    "Specific prompts",
+                    "Vague prompts",
+                    "Follow-up prompts",
+                    "Context-rich prompts"
+                ],
+                correctAnswer: 1
+            }
+        ];
+
+        // Quiz state
+        let userName = "";
+        let currentQuestionIndex = 0;
+        let answeredQuestions = new Set();
+        let userAnswers = {};
+        let questionOrder = [];
+
+        // DOM elements
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const nameScreen = document.getElementById('name-screen');
+        const quizSection = document.getElementById('quiz-section');
+        const completionScreen = document.getElementById('completion-screen');
+        
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const submitButton = document.getElementById('submit-btn');
+        const skipButton = document.getElementById('skip-btn');
+        const feedbackElement = document.getElementById('feedback');
+        const answeredCountElement = document.getElementById('answered-count');
+        const currentQuestionNumberElement = document.getElementById('current-question-number');
+        const progressBar = document.getElementById('progress-bar');
+        
+        const startButton = document.getElementById('start-btn');
+        const submitNameButton = document.getElementById('submit-name-btn');
+        const userNameInput = document.getElementById('user-name');
+        const completionNameElement = document.getElementById('completion-name');
+        const certificateNameElement = document.getElementById('certificate-name');
+        const completionDateElement = document.getElementById('completion-date');
+        const finalScoreElement = document.getElementById('final-score');
+        const certificateScoreElement = document.getElementById('certificate-score');
+        const performanceMessageElement = document.getElementById('performance-message');
+        const resultsListElement = document.getElementById('results-list');
+        const downloadResultsButton = document.getElementById('download-results-btn');
+        const restartQuizButton = document.getElementById('restart-quiz-btn');
+
+        let selectedOption = null;
+
+        // Initialize the quiz
+        function initQuiz() {
+            // Initialize question order
+            questionOrder = Array.from({length: quizQuestions.length}, (_, i) => i);
+            
+            // Event listeners
+            startButton.addEventListener('click', showNameScreen);
+            submitNameButton.addEventListener('click', startQuiz);
+            submitButton.addEventListener('click', submitAnswer);
+            skipButton.addEventListener('click', skipQuestion);
+            downloadResultsButton.addEventListener('click', downloadResults);
+            restartQuizButton.addEventListener('click', restartQuiz);
+            
+            // Allow Enter key for name input
+            userNameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    startQuiz();
+                }
+            });
+        }
+
+        // Show name input screen
+        function showNameScreen() {
+            welcomeScreen.classList.add('hidden');
+            nameScreen.classList.remove('hidden');
+            userNameInput.focus();
+        }
+
+        // Start the quiz
+        function startQuiz() {
+            userName = userNameInput.value.trim();
+            
+            if (!userName) {
+                alert("Please enter your name to continue.");
+                return;
+            }
+            
+            nameScreen.classList.add('hidden');
+            quizSection.classList.remove('hidden');
+            
+            currentQuestionIndex = 0;
+            loadQuestion();
+        }
+
+        // Load a question
+        function loadQuestion() {
+            // Clear feedback
+            feedbackElement.innerHTML = '';
+            feedbackElement.className = 'feedback';
+            
+            // If we've gone through all questions, find next unanswered
+            if (currentQuestionIndex >= questionOrder.length) {
+                // Find first unanswered question
+                let foundUnanswered = false;
+                for (let i = 0; i < questionOrder.length; i++) {
+                    if (!answeredQuestions.has(questionOrder[i])) {
+                        currentQuestionIndex = i;
+                        foundUnanswered = true;
+                        break;
+                    }
+                }
+                
+                // If all questions are answered, complete the quiz
+                if (!foundUnanswered) {
+                    completeQuiz();
+                    return;
+                }
+            }
+            
+            const questionData = quizQuestions[questionOrder[currentQuestionIndex]];
+            
+            // Display the question
+            questionElement.textContent = questionData.question;
+            
+            // Clear previous options
+            optionsElement.innerHTML = '';
+            
+            // Add options
+            questionData.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option;
+                optionElement.dataset.index = index;
+                optionElement.addEventListener('click', selectOption);
+                optionsElement.appendChild(optionElement);
+            });
+            
+            selectedOption = null;
+            submitButton.disabled = true;
+            
+            // Update display
+            updateDisplay();
+        }
+
+        // Handle option selection
+        function selectOption(e) {
+            // Remove selected class from all options
+            document.querySelectorAll('.option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked option
+            e.target.classList.add('selected');
+            selectedOption = parseInt(e.target.dataset.index);
+            submitButton.disabled = false;
+        }
+
+        // Submit answer
+        function submitAnswer() {
+            if (selectedOption === null) return;
+            
+            const questionIndex = questionOrder[currentQuestionIndex];
+            const questionData = quizQuestions[questionIndex];
+            const isCorrect = selectedOption === questionData.correctAnswer;
+            
+            // Store the answer
+            userAnswers[questionIndex] = {
+                selectedOption: selectedOption,
+                isCorrect: isCorrect,
+                question: questionData.question,
+                selectedAnswer: questionData.options[selectedOption],
+                correctAnswer: questionData.options[questionData.correctAnswer]
+            };
+            
+            // Mark as answered
+            answeredQuestions.add(questionIndex);
+            
+            // Show feedback
+            if (isCorrect) {
+                feedbackElement.textContent = "Correct!";
+                feedbackElement.className = "feedback success";
+            } else {
+                feedbackElement.textContent = `Incorrect. The correct answer is: ${questionData.options[questionData.correctAnswer]}`;
+                feedbackElement.className = "feedback error";
+            }
+            
+            // Update display
+            updateDisplay();
+            
+            // Move to next question after delay
+            setTimeout(() => {
+                nextQuestion();
+            }, 2000);
+        }
+
+        // Skip question
+        function skipQuestion() {
+            nextQuestion();
+        }
+
+        // Move to next question
+        function nextQuestion() {
+            currentQuestionIndex++;
+            
+            // If we've reached the end, loop back to find unanswered questions
+            if (currentQuestionIndex >= questionOrder.length) {
+                // Find first unanswered question
+                let foundUnanswered = false;
+                for (let i = 0; i < questionOrder.length; i++) {
+                    if (!answeredQuestions.has(questionOrder[i])) {
+                        currentQuestionIndex = i;
+                        foundUnanswered = true;
+                        break;
+                    }
+                }
+                
+                // If all questions are answered, complete the quiz
+                if (!foundUnanswered) {
+                    completeQuiz();
+                    return;
+                }
+            } else {
+                // If current question is already answered, find next unanswered
+                while (currentQuestionIndex < questionOrder.length && 
+                       answeredQuestions.has(questionOrder[currentQuestionIndex])) {
+                    currentQuestionIndex++;
+                }
+                
+                // If we reached the end, loop back
+                if (currentQuestionIndex >= questionOrder.length) {
+                    for (let i = 0; i < questionOrder.length; i++) {
+                        if (!answeredQuestions.has(questionOrder[i])) {
+                            currentQuestionIndex = i;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Check if all questions are answered
+            if (answeredQuestions.size === quizQuestions.length) {
+                completeQuiz();
+                return;
+            }
+            
+            loadQuestion();
+        }
+
+        // Update display elements
+        function updateDisplay() {
+            answeredCountElement.textContent = answeredQuestions.size;
+            currentQuestionNumberElement.textContent = currentQuestionIndex + 1;
+            
+            // Update progress bar
+            const progress = (answeredQuestions.size / quizQuestions.length) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        // Complete the quiz
+        function completeQuiz() {
+            quizSection.classList.add('hidden');
+            completionScreen.classList.remove('hidden');
+            
+            // Calculate score
+            const correctAnswers = Object.values(userAnswers).filter(answer => answer.isCorrect).length;
+            const totalQuestions = quizQuestions.length;
+            const percentage = Math.round((correctAnswers / totalQuestions) * 100);
+            
+            // Set completion details
+            completionNameElement.textContent = userName;
+            certificateNameElement.textContent = userName;
+            finalScoreElement.textContent = `${correctAnswers}/${totalQuestions}`;
+            certificateScoreElement.textContent = `${correctAnswers}/${totalQuestions} (${percentage}%)`;
+            
+            // Set performance message
+            let performanceClass = '';
+            let performanceText = '';
+            
+            if (percentage >= 90) {
+                performanceClass = 'excellent';
+                performanceText = 'Excellent work! You have a strong understanding of the Australian Legal System.';
+            } else if (percentage >= 75) {
+                performanceClass = 'good';
+                performanceText = 'Good job! You have a solid grasp of the concepts.';
+            } else if (percentage >= 60) {
+                performanceClass = 'needs-improvement';
+                performanceText = 'You may want to review the material to strengthen your understanding.';
+            } else {
+                performanceClass = 'poor';
+                performanceText = 'Consider reviewing the course material before retaking the quiz.';
+            }
+            
+            performanceMessageElement.className = `performance-message ${performanceClass}`;
+            performanceMessageElement.innerHTML = `Congratulations ${userName}!<br>${performanceText}`;
+            
+            const today = new Date();
+            completionDateElement.textContent = today.toLocaleDateString();
+            
+            // Display detailed results
+            displayResults();
+        }
+
+        // Display detailed results
+        function displayResults() {
+            resultsListElement.innerHTML = '';
+            
+            quizQuestions.forEach((question, index) => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                
+                const answer = userAnswers[index];
+                if (answer) {
+                    resultItem.innerHTML = `
+                        <p><strong>Q${index + 1}: ${question.question}</strong></p>
+                        <p>Your answer: ${answer.selectedAnswer}</p>
+                        <p>Correct answer: ${answer.correctAnswer}</p>
+                        <p style="color: ${answer.isCorrect ? 'green' : 'red'}; font-weight: bold;">
+                            ${answer.isCorrect ? '✓ Correct' : '✗ Incorrect'}
+                        </p>
+                    `;
+                } else {
+                    resultItem.innerHTML = `
+                        <p><strong>Q${index + 1}: ${question.question}</strong></p>
+                        <p style="color: #856404; font-weight: bold;">Not answered</p>
+                    `;
+                }
+                
+                resultsListElement.appendChild(resultItem);
+            });
+        }
+
+        // Download results
+        function downloadResults() {
+            const correctAnswers = Object.values(userAnswers).filter(answer => answer.isCorrect).length;
+            const totalQuestions = quizQuestions.length;
+            const percentage = Math.round((correctAnswers / totalQuestions) * 100);
+            
+            let resultsText = `Australian Legal System Quiz Results\n\n`;
+            resultsText += `Name: ${userName}\n`;
+            resultsText += `Date: ${new Date().toLocaleDateString()}\n`;
+            resultsText += `Score: ${correctAnswers}/${totalQuestions} (${percentage}%)\n\n`;
+            resultsText += `Detailed Results:\n`;
+            resultsText += `==================\n\n`;
+            
+            quizQuestions.forEach((question, index) => {
+                const answer = userAnswers[index];
+                resultsText += `Question ${index + 1}: ${question.question}\n`;
+                
+                if (answer) {
+                    resultsText += `Your answer: ${answer.selectedAnswer}\n`;
+                    resultsText += `Correct answer: ${answer.correctAnswer}\n`;
+                    resultsText += `Result: ${answer.isCorrect ? 'Correct' : 'Incorrect'}\n\n`;
+                } else {
+                    resultsText += `Your answer: Not answered\n`;
+                    resultsText += `Correct answer: ${question.options[question.correctAnswer]}\n`;
+                    resultsText += `Result: Not answered\n\n`;
+                }
+            });
+            
+            // Create download link
+            const blob = new Blob([resultsText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Australian_Legal_System_Quiz_Results_${userName.replace(/\s+/g, '_')}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Restart the quiz
+        function restartQuiz() {
+            // Reset all quiz state
+            currentQuestionIndex = 0;
+            answeredQuestions = new Set();
+            userAnswers = {};
+            userName = "";
+            
+            // Clear input
+            userNameInput.value = "";
+            
+            // Show welcome screen
+            completionScreen.classList.add('hidden');
+            welcomeScreen.classList.remove('hidden');
+        }
+
+        // Initialize the quiz when page loads
+        initQuiz();
+    </script>
+</body>
+</html>
