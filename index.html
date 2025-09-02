@@ -124,12 +124,6 @@
             margin: 10px 0;
             font-size: 18px;
         }
-        .question-counter {
-            font-weight: bold;
-            margin: 10px 0;
-            font-size: 16px;
-            color: #666;
-        }
         .button-container {
             margin-top: 20px;
             display: flex;
@@ -168,19 +162,21 @@
         .hidden {
             display: none;
         }
-        .final-score {
-            font-size: 36px;
-            color: #155724;
-            margin: 20px 0;
+        .question-counter {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
         }
-        .performance-message {
-            font-size: 20px;
+        .perfect-score {
+            color: #155724;
+            font-size: 24px;
             margin-bottom: 20px;
         }
-        .excellent { color: #155724; }
-        .good { color: #0c5460; }
-        .needs-improvement { color: #856404; }
-        .poor { color: #721c24; }
+        .incomplete-score {
+            color: #721c24;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -189,8 +185,9 @@
         <div id="welcome-screen" class="welcome-screen">
             <h1>Australian Legal System Quiz</h1>
             <p>Welcome to the Australian Legal System and Introduction to the Alerting Process Quiz.</p>
-            <p>This quiz contains 20 questions covering the Australian legal system, how laws are made, and the alerting process.</p>
-            <p>You must answer all 20 questions to complete the quiz. You can skip questions and return to them later.</p>
+            <p>This quiz contains 20 questions about the Australian legal system, government structure, law-making processes, and alerting procedures.</p>
+            <p><strong>You must answer all 20 questions correctly (20/20) to complete the quiz successfully.</strong></p>
+            <p>You can skip questions and return to them later, but you must get every question right to pass.</p>
             <button id="start-btn" class="btn">I'm Ready to Start</button>
         </div>
 
@@ -207,9 +204,9 @@
             <div class="progress">
                 <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
             </div>
-            <h2 class="quiz-title">Australian Legal System and Alerting Process</h2>
-            <div class="question-counter">Question <span id="current-question-number">1</span> of 20</div>
-            <div class="score-display">Answered: <span id="answered-count">0</span>/20</div>
+            <h2 class="quiz-title">Australian Legal System and Introduction to the Alerting Process</h2>
+            <div class="question-counter">Question <span id="question-number">1</span> of 20</div>
+            <div class="score-display">Correct Answers: <span id="correct-count">0</span>/20</div>
             <div id="feedback" class="feedback"></div>
             <div class="quiz-container" id="quiz-container">
                 <div class="question" id="question"></div>
@@ -224,27 +221,23 @@
         <!-- Completion Screen -->
         <div id="completion-screen" class="completion-screen hidden">
             <h1>Quiz Completed!</h1>
-            <p class="performance-message" id="performance-message">Congratulations <span id="completion-name"></span>!</p>
-            <div class="final-score">Score: <span id="final-score">0/20</span></div>
-            <div class="certificate">
-                <h2>Certificate of Completion</h2>
-                <p>This certifies that</p>
-                <h3 id="certificate-name"></h3>
-                <p>has successfully completed the Australian Legal System Quiz</p>
-                <p>Date: <span id="completion-date"></span></p>
-                <p>Score: <span id="certificate-score"></span></p>
+            <div id="completion-message"></div>
+            <div id="certificate-section" class="hidden">
+                <div class="certificate">
+                    <h2>Certificate of Completion</h2>
+                    <p>This certifies that</p>
+                    <h3 id="certificate-name"></h3>
+                    <p>has successfully completed the Australian Legal System and Introduction to the Alerting Process Quiz</p>
+                    <p>with a perfect score of 20/20</p>
+                    <p>Date: <span id="completion-date"></span></p>
+                </div>
             </div>
-            <div class="results-container">
-                <h3>Your Results:</h3>
-                <div id="results-list"></div>
-            </div>
-            <button class="btn" id="download-results-btn">Download Results</button>
-            <button class="btn restart" id="restart-quiz-btn">Take Quiz Again</button>
+            <button class="btn restart" id="restart-quiz-btn">Start New Quiz</button>
         </div>
     </div>
 
     <script>
-        // Quiz questions
+        // Quiz data structure
         const quizQuestions = [
             {
                 question: "What type of government system does Australia have?",
@@ -451,8 +444,9 @@
         // Quiz state
         let userName = "";
         let currentQuestionIndex = 0;
+        let selectedOption = null;
+        let correctAnswers = new Set();
         let answeredQuestions = new Set();
-        let userAnswers = {};
         let questionOrder = [];
 
         // DOM elements
@@ -466,39 +460,32 @@
         const submitButton = document.getElementById('submit-btn');
         const skipButton = document.getElementById('skip-btn');
         const feedbackElement = document.getElementById('feedback');
-        const answeredCountElement = document.getElementById('answered-count');
-        const currentQuestionNumberElement = document.getElementById('current-question-number');
+        const questionNumberElement = document.getElementById('question-number');
+        const correctCountElement = document.getElementById('correct-count');
         const progressBar = document.getElementById('progress-bar');
         
         const startButton = document.getElementById('start-btn');
         const submitNameButton = document.getElementById('submit-name-btn');
         const userNameInput = document.getElementById('user-name');
-        const completionNameElement = document.getElementById('completion-name');
+        const completionMessageElement = document.getElementById('completion-message');
+        const certificateSectionElement = document.getElementById('certificate-section');
         const certificateNameElement = document.getElementById('certificate-name');
         const completionDateElement = document.getElementById('completion-date');
-        const finalScoreElement = document.getElementById('final-score');
-        const certificateScoreElement = document.getElementById('certificate-score');
-        const performanceMessageElement = document.getElementById('performance-message');
-        const resultsListElement = document.getElementById('results-list');
-        const downloadResultsButton = document.getElementById('download-results-btn');
         const restartQuizButton = document.getElementById('restart-quiz-btn');
-
-        let selectedOption = null;
 
         // Initialize the quiz
         function initQuiz() {
-            // Initialize question order
-            questionOrder = Array.from({length: quizQuestions.length}, (_, i) => i);
+            // Create question order (0-19)
+            questionOrder = Array.from({length: 20}, (_, i) => i);
             
             // Event listeners
             startButton.addEventListener('click', showNameScreen);
             submitNameButton.addEventListener('click', startQuiz);
-            submitButton.addEventListener('click', submitAnswer);
+            submitButton.addEventListener('click', checkAnswer);
             skipButton.addEventListener('click', skipQuestion);
-            downloadResultsButton.addEventListener('click', downloadResults);
             restartQuizButton.addEventListener('click', restartQuiz);
             
-            // Allow Enter key for name input
+            // Allow Enter key in name input
             userNameInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     startQuiz();
@@ -531,33 +518,34 @@
 
         // Load a question
         function loadQuestion() {
-            // Clear feedback
             feedbackElement.innerHTML = '';
             feedbackElement.className = 'feedback';
             
-            // If we've gone through all questions, find next unanswered
             if (currentQuestionIndex >= questionOrder.length) {
-                // Find first unanswered question
-                let foundUnanswered = false;
-                for (let i = 0; i < questionOrder.length; i++) {
-                    if (!answeredQuestions.has(questionOrder[i])) {
-                        currentQuestionIndex = i;
-                        foundUnanswered = true;
-                        break;
-                    }
-                }
-                
-                // If all questions are answered, complete the quiz
-                if (!foundUnanswered) {
-                    completeQuiz();
+                // If we've gone through all questions, check completion status
+                if (correctAnswers.size >= 20) {
+                    showCompletionScreen(true);
                     return;
+                } else if (answeredQuestions.size >= 20) {
+                    showCompletionScreen(false);
+                    return;
+                } else {
+                    // Reset to first unanswered question
+                    for (let i = 0; i < questionOrder.length; i++) {
+                        if (!answeredQuestions.has(questionOrder[i])) {
+                            currentQuestionIndex = i;
+                            break;
+                        }
+                    }
                 }
             }
             
-            const questionData = quizQuestions[questionOrder[currentQuestionIndex]];
+            let questionIndex = questionOrder[currentQuestionIndex];
+            let questionData = quizQuestions[questionIndex];
             
             // Display the question
             questionElement.textContent = questionData.question;
+            questionNumberElement.textContent = questionIndex + 1;
             
             // Clear previous options
             optionsElement.innerHTML = '';
@@ -575,8 +563,15 @@
             selectedOption = null;
             submitButton.disabled = true;
             
-            // Update display
-            updateDisplay();
+            // Update progress
+            updateProgress();
+        }
+
+        // Update progress display
+        function updateProgress() {
+            correctCountElement.textContent = correctAnswers.size;
+            const progress = (correctAnswers.size / 20) * 100;
+            progressBar.style.width = `${progress}%`;
         }
 
         // Handle option selection
@@ -592,237 +587,106 @@
             submitButton.disabled = false;
         }
 
-        // Submit answer
-        function submitAnswer() {
-            if (selectedOption === null) return;
-            
-            const questionIndex = questionOrder[currentQuestionIndex];
-            const questionData = quizQuestions[questionIndex];
-            const isCorrect = selectedOption === questionData.correctAnswer;
-            
-            // Store the answer
-            userAnswers[questionIndex] = {
-                selectedOption: selectedOption,
-                isCorrect: isCorrect,
-                question: questionData.question,
-                selectedAnswer: questionData.options[selectedOption],
-                correctAnswer: questionData.options[questionData.correctAnswer]
-            };
-            
-            // Mark as answered
-            answeredQuestions.add(questionIndex);
-            
-            // Show feedback
-            if (isCorrect) {
-                feedbackElement.textContent = "Correct!";
-                feedbackElement.className = "feedback success";
-            } else {
-                feedbackElement.textContent = `Incorrect. The correct answer is: ${questionData.options[questionData.correctAnswer]}`;
-                feedbackElement.className = "feedback error";
-            }
-            
-            // Update display
-            updateDisplay();
-            
-            // Move to next question after delay
-            setTimeout(() => {
-                nextQuestion();
-            }, 2000);
-        }
-
-        // Skip question
+        // Skip the current question
         function skipQuestion() {
-            nextQuestion();
-        }
-
-        // Move to next question
-        function nextQuestion() {
+            // Move to next question
             currentQuestionIndex++;
-            
-            // If we've reached the end, loop back to find unanswered questions
-            if (currentQuestionIndex >= questionOrder.length) {
-                // Find first unanswered question
-                let foundUnanswered = false;
-                for (let i = 0; i < questionOrder.length; i++) {
-                    if (!answeredQuestions.has(questionOrder[i])) {
-                        currentQuestionIndex = i;
-                        foundUnanswered = true;
-                        break;
-                    }
-                }
-                
-                // If all questions are answered, complete the quiz
-                if (!foundUnanswered) {
-                    completeQuiz();
-                    return;
-                }
-            } else {
-                // If current question is already answered, find next unanswered
-                while (currentQuestionIndex < questionOrder.length && 
-                       answeredQuestions.has(questionOrder[currentQuestionIndex])) {
-                    currentQuestionIndex++;
-                }
-                
-                // If we reached the end, loop back
-                if (currentQuestionIndex >= questionOrder.length) {
-                    for (let i = 0; i < questionOrder.length; i++) {
-                        if (!answeredQuestions.has(questionOrder[i])) {
-                            currentQuestionIndex = i;
-                            break;
-                        }
-                    }
-                }
-            }
-            
-            // Check if all questions are answered
-            if (answeredQuestions.size === quizQuestions.length) {
-                completeQuiz();
-                return;
-            }
-            
             loadQuestion();
         }
 
-        // Update display elements
-        function updateDisplay() {
-            answeredCountElement.textContent = answeredQuestions.size;
-            currentQuestionNumberElement.textContent = currentQuestionIndex + 1;
+        // Check the answer
+        function checkAnswer() {
+            let questionIndex = questionOrder[currentQuestionIndex];
+            let questionData = quizQuestions[questionIndex];
+            let correctAnswerIndex = questionData.correctAnswer;
             
-            // Update progress bar
-            const progress = (answeredQuestions.size / quizQuestions.length) * 100;
-            progressBar.style.width = `${progress}%`;
+            // Mark question as answered
+            answeredQuestions.add(questionIndex);
+            
+            const isCorrect = selectedOption === correctAnswerIndex;
+            
+            if (isCorrect) {
+                correctAnswers.add(questionIndex);
+                feedbackElement.textContent = "Correct!";
+                feedbackElement.className = "feedback success";
+            } else {
+                // Remove from correct answers if it was previously correct
+                correctAnswers.delete(questionIndex);
+                feedbackElement.textContent = "Incorrect. Please try again or skip to continue.";
+                feedbackElement.className = "feedback error";
+            }
+            
+            // Check if all questions are answered correctly
+            if (correctAnswers.size >= 20) {
+                setTimeout(() => {
+                    showCompletionScreen(true);
+                }, 2000);
+                return;
+            }
+            
+            // Check if all questions are answered (but not all correct)
+            if (answeredQuestions.size >= 20 && correctAnswers.size < 20) {
+                setTimeout(() => {
+                    showCompletionScreen(false);
+                }, 2000);
+                return;
+            }
+            
+            // Move to next question after a delay
+            setTimeout(() => {
+                currentQuestionIndex++;
+                loadQuestion();
+            }, 2000);
         }
 
-        // Complete the quiz
-        function completeQuiz() {
+        // Show completion screen
+        function showCompletionScreen(passed) {
             quizSection.classList.add('hidden');
             completionScreen.classList.remove('hidden');
             
-            // Calculate score
-            const correctAnswers = Object.values(userAnswers).filter(answer => answer.isCorrect).length;
-            const totalQuestions = quizQuestions.length;
-            const percentage = Math.round((correctAnswers / totalQuestions) * 100);
-            
-            // Set completion details
-            completionNameElement.textContent = userName;
-            certificateNameElement.textContent = userName;
-            finalScoreElement.textContent = `${correctAnswers}/${totalQuestions}`;
-            certificateScoreElement.textContent = `${correctAnswers}/${totalQuestions} (${percentage}%)`;
-            
-            // Set performance message
-            let performanceClass = '';
-            let performanceText = '';
-            
-            if (percentage >= 90) {
-                performanceClass = 'excellent';
-                performanceText = 'Excellent work! You have a strong understanding of the Australian Legal System.';
-            } else if (percentage >= 75) {
-                performanceClass = 'good';
-                performanceText = 'Good job! You have a solid grasp of the concepts.';
-            } else if (percentage >= 60) {
-                performanceClass = 'needs-improvement';
-                performanceText = 'You may want to review the material to strengthen your understanding.';
+            if (passed) {
+                // Perfect score - show certificate
+                completionMessageElement.innerHTML = `
+                    <div class="perfect-score">🎉 Congratulations ${userName}! 🎉</div>
+                    <p>You have successfully completed the Australian Legal System Quiz with a perfect score of 20/20!</p>
+                `;
+                
+                certificateSectionElement.classList.remove('hidden');
+                certificateNameElement.textContent = userName;
+                
+                const today = new Date();
+                completionDateElement.textContent = today.toLocaleDateString();
             } else {
-                performanceClass = 'poor';
-                performanceText = 'Consider reviewing the course material before retaking the quiz.';
+                // Did not get perfect score
+                completionMessageElement.innerHTML = `
+                    <div class="incomplete-score">Quiz Completed</div>
+                    <p>Hello ${userName}, you have answered all 20 questions.</p>
+                    <p>Your score: ${correctAnswers.size}/20</p>
+                    <p><strong>You need a perfect score of 20/20 to pass this quiz.</strong></p>
+                    <p>Please try again to achieve the required score.</p>
+                `;
+                
+                certificateSectionElement.classList.add('hidden');
             }
-            
-            performanceMessageElement.className = `performance-message ${performanceClass}`;
-            performanceMessageElement.innerHTML = `Congratulations ${userName}!<br>${performanceText}`;
-            
-            const today = new Date();
-            completionDateElement.textContent = today.toLocaleDateString();
-            
-            // Display detailed results
-            displayResults();
-        }
-
-        // Display detailed results
-        function displayResults() {
-            resultsListElement.innerHTML = '';
-            
-            quizQuestions.forEach((question, index) => {
-                const resultItem = document.createElement('div');
-                resultItem.className = 'result-item';
-                
-                const answer = userAnswers[index];
-                if (answer) {
-                    resultItem.innerHTML = `
-                        <p><strong>Q${index + 1}: ${question.question}</strong></p>
-                        <p>Your answer: ${answer.selectedAnswer}</p>
-                        <p>Correct answer: ${answer.correctAnswer}</p>
-                        <p style="color: ${answer.isCorrect ? 'green' : 'red'}; font-weight: bold;">
-                            ${answer.isCorrect ? '✓ Correct' : '✗ Incorrect'}
-                        </p>
-                    `;
-                } else {
-                    resultItem.innerHTML = `
-                        <p><strong>Q${index + 1}: ${question.question}</strong></p>
-                        <p style="color: #856404; font-weight: bold;">Not answered</p>
-                    `;
-                }
-                
-                resultsListElement.appendChild(resultItem);
-            });
-        }
-
-        // Download results
-        function downloadResults() {
-            const correctAnswers = Object.values(userAnswers).filter(answer => answer.isCorrect).length;
-            const totalQuestions = quizQuestions.length;
-            const percentage = Math.round((correctAnswers / totalQuestions) * 100);
-            
-            let resultsText = `Australian Legal System Quiz Results\n\n`;
-            resultsText += `Name: ${userName}\n`;
-            resultsText += `Date: ${new Date().toLocaleDateString()}\n`;
-            resultsText += `Score: ${correctAnswers}/${totalQuestions} (${percentage}%)\n\n`;
-            resultsText += `Detailed Results:\n`;
-            resultsText += `==================\n\n`;
-            
-            quizQuestions.forEach((question, index) => {
-                const answer = userAnswers[index];
-                resultsText += `Question ${index + 1}: ${question.question}\n`;
-                
-                if (answer) {
-                    resultsText += `Your answer: ${answer.selectedAnswer}\n`;
-                    resultsText += `Correct answer: ${answer.correctAnswer}\n`;
-                    resultsText += `Result: ${answer.isCorrect ? 'Correct' : 'Incorrect'}\n\n`;
-                } else {
-                    resultsText += `Your answer: Not answered\n`;
-                    resultsText += `Correct answer: ${question.options[question.correctAnswer]}\n`;
-                    resultsText += `Result: Not answered\n\n`;
-                }
-            });
-            
-            // Create download link
-            const blob = new Blob([resultsText], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Australian_Legal_System_Quiz_Results_${userName.replace(/\s+/g, '_')}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
         }
 
         // Restart the quiz
         function restartQuiz() {
             // Reset all quiz state
             currentQuestionIndex = 0;
+            correctAnswers = new Set();
             answeredQuestions = new Set();
-            userAnswers = {};
-            userName = "";
-            
-            // Clear input
-            userNameInput.value = "";
+            selectedOption = null;
             
             // Show welcome screen
             completionScreen.classList.add('hidden');
             welcomeScreen.classList.remove('hidden');
+            
+            // Clear name input
+            userNameInput.value = '';
         }
 
-        // Initialize the quiz when page loads
+        // Start the quiz
         initQuiz();
     </script>
 </body>
